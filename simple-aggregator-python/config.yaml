@@ -1,0 +1,3 @@
+data_path: 'data/*.csv'
+table_name: 'events'
+domain_model: 'duckdb' # do not change
