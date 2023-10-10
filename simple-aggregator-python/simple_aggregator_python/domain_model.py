@@ -1,7 +1,9 @@
 import logging
+from abc import ABC, abstractmethod
 
 import duckdb
-from abc import ABC, abstractmethod
+
+logger = logging.getLogger("simple-aggregator-logger")
 
 
 class CountEventsByCustomerId(ABC):
@@ -14,7 +16,7 @@ class CountEventsByCustomerIdWithDuckDB(CountEventsByCustomerId):
     def __init__(self, data_path, table_name, bootstrap_from_filepath=True):
         self.data_path = data_path
         self.table_name = table_name
-        logging.info(f"Table Name: {self.table_name}, Data Path: {self.data_path}")
+        logger.info(f"Table Name: {self.table_name}, Data Path: {self.data_path}")
 
         create_table_sql_stmt = f"""
         CREATE TABLE {self.table_name}(customerId VARCHAR, eventType VARCHAR, transactionId VARCHAR, eventTime TIMESTAMP);
@@ -32,7 +34,6 @@ class CountEventsByCustomerIdWithDuckDB(CountEventsByCustomerId):
 
     def run_sql_statement(cls, sql_stmt):
         return duckdb.sql(sql_stmt)
-
 
     def count_events(self, customer_id, start_timestamp, end_timestamp):
         group_by_statement = """
@@ -53,7 +54,12 @@ class CountEventsByCustomerIdWithDuckDB(CountEventsByCustomerId):
     
         ORDER BY date_trunc( 'hour', eventTime)
         """
-        _groupby_statement = group_by_statement.format(table_name=self.table_name, input_customer_id=customer_id, event_start_time=start_timestamp, event_end_time=end_timestamp)
-        logging.info(f"Running the following query: {_groupby_statement}")
+        _groupby_statement = group_by_statement.format(
+            table_name=self.table_name,
+            input_customer_id=customer_id,
+            event_start_time=start_timestamp,
+            event_end_time=end_timestamp,
+        )
+        logger.info(f"Running the following query: {_groupby_statement}")
         response = self.run_sql_statement(_groupby_statement).df()
         return response
